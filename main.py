@@ -16,16 +16,28 @@ class Arena:
         self.border_size = border_size
         self.snakes = snakes
         self.food = food
-        self.components = pygame.sprite.renderPlain()
+        self.components = pygame.sprite.RenderPlain()
+        for snake in self.snakes:
+            for parts in snake.body_parts:
+                self.components.add(parts)
+        for f in self.food:
+            self.components.add(f)
         """
         We need to add the snake bodies to the components
         object so that they will be painted on the screen.
         """
         pass
 
+    """
+    still working on this
     def make_food(self):
-        # randomly place some food
+        while len(self.food) < 4:
+            random.randrange(self.border_size[0])
+            random.randrange(self.border_size[1])
+        return
+
         pass
+    """
 
     def move_snakes(self, directions):
         for snake, dir in self.snakes, directions:
@@ -38,9 +50,11 @@ class Arena:
                     previous = temp.pop(0)
                     part.row = previous.row
                     part.col = previous.col
+        return
 
     """
     Checks each snake to see if it has eaten food or collided with another snake or the boundary
+    Returns the Snake that loses or None if the game continues
     """
     def detect_collisions(self):
         for snake in self.snakes:
@@ -50,7 +64,8 @@ class Arena:
             for other in self.snakes:
                 if not (snake.__eq__(other)):
                     if self.did_collide(head, other) or self.check_boundary(head):
-                        #game over
+                        return snake
+        return None
 
     """
     Receives a Body object (head) and a list of Body objects (other)
@@ -83,11 +98,11 @@ class Arena:
         mid = self.border_width/2
         width = self.border_size[0] * WIDTH
         height = self.border_size[1] * HEIGHT
-        pygame.draw.line(screen, color, (self.x, mid), (width, mid), self.border_width)
-        pygame.draw.line(screen, color, (mid, self.y), (mid, height), self.border_width)
-        pygame.draw.line(screen, color, (mid,  height), (width, height), self.border_width)
-        pygame.draw.line(screen, color, (width, mid), (width, height), self.border_width)
-        pass
+        pygame.draw.line(screen, color, (self.x-mid, self.y), (width, self.y), self.border_width)
+        pygame.draw.line(screen, color, (self.x, self.y-mid), (self.x, height), self.border_width)
+        pygame.draw.line(screen, color, (self.x-mid,  height), (width, height), self.border_width)
+        pygame.draw.line(screen, color, (width, self.y-mid), (width, height+mid), self.border_width)
+        return
     pass
 
 ### ROUDI ###
@@ -101,7 +116,6 @@ class Body(pygame.sprite.Sprite):
 
     def __eq__(self, other):
         return self.row == other.row and self.col == other.col
-
 
     pass
 
@@ -134,19 +148,16 @@ class AI(Snake):
 ### KEVIN ###
 class Game():
     def __init__():
-        #initialize the arena
         pass
 
     def new_game():
-
+        pass
 
     def initialize_snakes():
         pass
 
     def main_loop(screen, arena, clock):
-        arena.components.draw(screen)
-        arena.draw_border()
-        pygame.display.flip()
+
         pass
 
     pass
@@ -156,3 +167,4 @@ class Single_Player(Game):
 
 class Multi_Player(Game):
     pass
+
