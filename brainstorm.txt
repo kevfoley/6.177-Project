@@ -1,0 +1,18 @@
+Main Menu
+-Choose between multiplayer or single (maybe do AI)
+
+Multiplayer Menu
+- Allow to choose color of snake
+- Name your snake (Inputs)
+- Play game button
+- Small, Medium, Large, Board
+- Change speed of snake (pick difficulty)
+
+Single Player:
+- Split into sections
+  - Game play
+  - Scores to the side
+
+Multiplayer:
+- Continue playing
+- Same as single, but add one person
