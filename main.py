@@ -74,11 +74,22 @@ class AI(Snake):
 ### KEVIN ###
 class Game():
     def __init__():
-        #initialize the arena
-        pass
+        """
+        Set up the components to start a game
+        """
+        rows = 100
+        cols = 100
+        pygame.init()
 
-    def new_game():
+        screen = pygame.display.set_mode(flags=pygame.FULLSCREEN)
 
+        pygame.display.set_caption("Snake")
+        snakes = []
+        food = []
+        arena = Arena(0,0, 10, snakes, food)
+
+        clock = pygame.time.Clock()
+        main_loop(screen, arena, clock)
 
     def initialize_snakes():
         pass
@@ -87,9 +98,7 @@ class Game():
         arena.components.draw(screen)
         arena.draw_border()
         pygame.display.flip()
-        pass
 
-    pass
 
 class Single_Player(Game):
     pass
