@@ -1,12 +1,11 @@
 import pygame
-
-pygame.init()
+from main import Arena
 """
+pygame.init()
 width = pygame.display.Info().current_w
 height = pygame.display.Info().current_h
 #above gets the screen resolution of screen being used, must be done before pygame.display.set_mode()
 screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN, 32)
-"""
 
 screen = pygame.display.set_mode((500,100))
 
@@ -21,8 +20,7 @@ pygame.draw.line(screen, color, (x, y), (x, height), border_width)
 pygame.draw.line(screen, color, (x,  height), (width, height), border_width)
 pygame.draw.line(screen, color, (width, y), (width, height), border_width)
 pygame.display.flip()
-
-
+"""
 
 def new_game():
     pygame.init()
@@ -35,6 +33,7 @@ def new_game():
     arena.draw_border(screen, (0, 255, 255))
     pygame.display.flip()
 
+    pygame.time.wait(5000)
+    pygame.quit()
+
 new_game()
-clock = pygame.time.Clock
-pygame.time.wait(5000)
