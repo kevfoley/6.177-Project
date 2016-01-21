@@ -4,8 +4,10 @@ import random
 
 WIDTH = 10
 HEIGHT = 10
-directions = [(0,1),(0,-1),(1,0),(0,-1)] #toward (row, col)
+DIRECTIONS = [(0,1),(0,-1),(1,0),(-1,0)] #toward (row, col)
 # Corresponds to ["East", "West", "South", "North"]
+DIR_KEYS_1 = [pygame.K_RIGHT, pygame.K_LEFT, pygame.K_DOWN, pygame.K_UP]
+DIR_KEYS_2 = [pygame.K_d, pygame.K_a, pygame.K_s, pygame.K_w]
 
 ### CHRISTINE ###
 class Arena:
@@ -16,9 +18,6 @@ class Arena:
         self.border_width = border_width
         self.border_size = border_size # tuple of (row, col)
         self.snakes = self.initialize_snakes(10, ((255,0,0), (0,255,0)))
-        for snake in self.snakes:
-            for part in snake.body_parts:
-                print part.row, part.col
         self.food = food
         self.components = pygame.sprite.RenderPlain()
         for snake in self.snakes:
@@ -30,8 +29,8 @@ class Arena:
     def initialize_snakes(self, length, colors):
         snakes = []
         for i in xrange(len(colors)):
-            start_row = self.border_size[0] * directions[i][1] / 2
-            start_col = self.border_size[1] * directions[i][0] / 2
+            start_row = self.border_size[0] * DIRECTIONS[i][1] / 2
+            start_col = self.border_size[1] * DIRECTIONS[i][0] / 2
             if start_row < 0:
                 start_row = start_row*-1
                 start_col = self.border_size[1] - 1
@@ -40,8 +39,8 @@ class Arena:
                 start_col = start_col * -1
             parts = []
             for j in reversed(range(length)):
-                row_n = start_row + j*directions[i][0]
-                col_n = start_col + j*directions[i][1]
+                row_n = start_row + j*DIRECTIONS[i][0]
+                col_n = start_col + j*DIRECTIONS[i][1]
                 b = Body(self, row_n, col_n, colors[i])
                 parts.append(b)
             s = Snake(parts)
@@ -54,7 +53,7 @@ class Arena:
         while self.components.has(Body(tempx, tempy)):
             temp_row = random.randrange(self.border_size[0])
             temp_col = random.randrange(self.border_size[1])
-        new_food = Body(tempx, tempy)
+        new_food = Body(temp_row, temp_col)
         self.food.append(new_food)
         self.components.add(new_food)
 
@@ -62,13 +61,13 @@ class Arena:
         for i in range(len(self.snakes)):
             snake = self.snakes[i]
             direction = directions[i]
-            temp = snake.body_parts[:]
-            for part in snake.body_parts:
-                if snake.is_head(part):
+            for i in reversed(range(len(snake.body_parts))):
+                part = snake.body_parts[i]
+                if i == 0:
                     part.row += direction[0]
                     part.col += direction[1]
                 else:
-                    previous = temp.pop(0)
+                    previous = snake.body_parts[i-1]
                     part.row = previous.row
                     part.col = previous.col
                 part.update()
@@ -195,7 +194,7 @@ class Game():
         width = pygame.display.Info().current_w
         height = pygame.display.Info().current_h
         #above gets the screen resolution of screen being used, must be done before pygame.display.set_mode()
-        screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN, 32)
+        screen = pygame.display.set_mode((width, height), 0, 32)
 
         pygame.display.set_caption("Snake")
         food = []
@@ -205,21 +204,30 @@ class Game():
         self.main_loop(screen, arena, clock)
 
     def main_loop(self, screen, arena, clock):
+        directions = [DIRECTIONS[0], DIRECTIONS[1]]
         stop = False
         while stop == False:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:  # user clicks close
                     stop = True
                     pygame.quit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key in DIR_KEYS_1:
+                        directions[1] = DIRECTIONS[DIR_KEYS_1.index(event.key)]
+                        print event.key
+                    if event.key in DIR_KEYS_2:
+                        directions[0] = DIRECTIONS[DIR_KEYS_2.index(event.key)]
+                        print event.key
             if stop == False:
+                screen.fill((0,0,0))
                 arena.components.draw(screen)
                 arena.draw_border(screen, (255,255,255))
-                pygame.display.flip()
-                arena.move_snakes((directions[0],directions[1]))
+                arena.move_snakes(directions)
                 pygame.display.flip()
                 loser = arena.detect_collisions()
-                ##if loser != None:
-                ##    stop = True
+                #if loser == None:
+                    #stop = True
+                clock.tick(10)
 
         pygame.quit()
 
