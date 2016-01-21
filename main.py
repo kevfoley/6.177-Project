@@ -8,69 +8,57 @@ DIRECTIONS = [(0,1),(0,-1),(1,0),(-1,0)] #toward (row, col)
 # Corresponds to ["East", "West", "South", "North"]
 DIR_KEYS_1 = [pygame.K_RIGHT, pygame.K_LEFT, pygame.K_DOWN, pygame.K_UP]
 DIR_KEYS_2 = [pygame.K_d, pygame.K_a, pygame.K_s, pygame.K_w]
-
+FOOD_COLOR = (0,0,255)
 ### CHRISTINE ###
 class Arena:
     # To be full screen and should have a border
-    def __init__(self, x, y, border_width, border_size, food):
+    def __init__(self, x, y, border_width, border_size):
         self.x = x
         self.y = y
         self.border_width = border_width
         self.border_size = border_size # tuple of (row, col)
         self.snakes = self.initialize_snakes(10, ((255,0,0), (0,255,0)))
-        self.food = food
+        self.food = []
         self.components = pygame.sprite.RenderPlain()
+        self.initialize_food()
         for snake in self.snakes:
             for parts in snake.body_parts:
                 self.components.add(parts)
-        for f in self.food:
-            self.components.add(f)
+
+    def initialize_food(self):
+        for _ in xrange(len(self.snakes)):
+            self.make_food()
 
     def initialize_snakes(self, length, colors):
         snakes = []
         for i in xrange(len(colors)):
-            start_row = self.border_size[0] * DIRECTIONS[i][1] / 2
-            start_col = self.border_size[1] * DIRECTIONS[i][0] / 2
-            if start_row < 0:
-                start_row = start_row*-1
-                start_col = self.border_size[1] - 1
-            elif start_col < 0:
-                start_row = self.border_size[0] - 1
-                start_col = start_col * -1
-            parts = []
-            for j in reversed(range(length)):
-                row_n = start_row + j*DIRECTIONS[i][0]
-                col_n = start_col + j*DIRECTIONS[i][1]
-                b = Body(self, row_n, col_n, colors[i])
-                parts.append(b)
-            s = Snake(parts)
+            s = Snake(self, length, colors[i], DIRECTIONS[i])
             snakes.append(s)
         return snakes
+
+    def space_occupied(self, row, col):
+        for sprite in self.components.sprites():
+            if sprite.row == row and sprite.col == col:
+                return True
+        return False
 
     def make_food(self):
         temp_row = random.randrange(self.border_size[0])
         temp_col = random.randrange(self.border_size[1])
-        while self.components.has(Body(tempx, tempy)):
+        while self.space_occupied(temp_row, temp_col):
             temp_row = random.randrange(self.border_size[0])
             temp_col = random.randrange(self.border_size[1])
-        new_food = Body(temp_row, temp_col)
+        new_food = Body(self, temp_row, temp_col, FOOD_COLOR)
         self.food.append(new_food)
         self.components.add(new_food)
 
+    def remove_food(self, bite):
+        self.components.remove(bite)
+        self.food.remove(bite)
+
     def move_snakes(self, directions):
-        for i in range(len(self.snakes)):
-            snake = self.snakes[i]
-            direction = directions[i]
-            for i in reversed(range(len(snake.body_parts))):
-                part = snake.body_parts[i]
-                if i == 0:
-                    part.row += direction[0]
-                    part.col += direction[1]
-                else:
-                    previous = snake.body_parts[i-1]
-                    part.row = previous.row
-                    part.col = previous.col
-                part.update()
+        for snake, direction in zip(self.snakes, directions):
+            snake.move(direction)
 
     """
     Checks each snake to see if it has eaten food or collided with another snake or the boundary
@@ -80,29 +68,16 @@ class Arena:
     def detect_collisions(self):
         for snake in self.snakes:
             head = snake.body_parts[0]
-            if self.did_collide(head, self.food):
-                self.eat_food(snake, self.food)
+            for bite in self.food:
+                if head.collided_with(bite):
+                    snake.eat_food(bite)
             if self.check_boundary(head):
                 return snake
             for snake in self.snakes:
-                if self.did_collide(head, snake.body_parts):
-                    return snake
+                for body in snake.body_parts:
+                    if head.collided_with(body):
+                        return snake
         return None
-
-    def eat_food(self, snake, food):
-        snake.add_unit()
-        #remove food
-        self.make_food()
-
-    """
-    Receives a Body object (head) and a list of Body objects (other)
-    Returns true is any of the Body objects in the list are at the same position as head and false otherwise
-    """
-    def did_collide(self, head, other):
-        for part in other:
-            if head.__eq__(part) and head != part:
-                return True
-        return False
 
     """
     Receives a Body object representing the head of a Snake
@@ -147,8 +122,16 @@ class Body(pygame.sprite.Sprite):
         self.rect.y = self.arena.get_row_top_loc(row)
         self.color = color
 
-    def __eq__(self, other):
-        return self.row == other.row and self.col == other.col
+    """
+    Receives two Body Objects
+    Returns true if the occupy the same space and are not the same object
+    """
+    def collided_with(self, other):
+        if self == other:
+            return False
+        elif self.row == other.row and self.col == other.col:
+            return True
+        return False
 
     def get_loc(self):
         return (self.row, self.col)
@@ -160,18 +143,55 @@ class Body(pygame.sprite.Sprite):
     pass
 
 class Snake:
-    def __init__(self, body_parts):
-        self.body_parts = body_parts
+    def __init__(self, arena, length, color, direction):
+        self.arena = arena
+        self.length = length
+        self.color = color
+        self.direction = direction
+        # Create body parts depending on initial direction
+        start_row = self.arena.border_size[0] * self.direction[1] / 2
+        start_col = self.arena.border_size[1] * self.direction[0] / 2
+        if start_row < 0:
+            start_row = start_row*-1
+            start_col = self.arena.border_size[1] - 1
+        elif start_col < 0:
+            start_row = self.arena.border_size[0] - 1
+            start_col = start_col * -1
+        parts = []
+        for j in reversed(range(self.length)):
+            row_n = start_row + j*self.direction[0]
+            col_n = start_col + j*self.direction[1]
+            b = Body(self.arena, row_n, col_n, self.color)
+            parts.append(b)
+        self.body_parts = parts
 
     def is_head(self, part):
         return self.body_parts[0] == part
 
-    def __eq__(self, other):
-        return self.body_parts == other.body_parts
+    def eat_food(self, bite):
+        self.add_unit()
+        self.arena.remove_food(bite)
+        self.arena.make_food()
+
+    def move(self, direction):
+        self.direction = direction
+        for i in reversed(range(len(self.body_parts))):
+            part = self.body_parts[i]
+            if i == 0:
+                part.row += self.direction[0]
+                part.col += self.direction[1]
+            else:
+                previous = self.body_parts[i-1]
+                part.row = previous.row
+                part.col = previous.col
+            part.update()
 
     """adds to body part to end of Snake"""
     def add_unit(self):
-        pass
+        previous = self.body_parts[-1]
+        unit = Body(self.arena, previous.row, previous.col, self.color)
+        self.body_parts.append(unit)
+        self.arena.components.add(unit)
 
 
 """
@@ -180,6 +200,12 @@ IF WE HAVE TIME
 class AI(Snake):
     pass
 """
+
+def opposite_direction(dir1, dir2):
+    for i in xrange(len(dir1)):
+        if dir1[i] != -1*dir2[i]:
+            return False
+    return True
 
 
 ### KEVIN ###
@@ -194,11 +220,10 @@ class Game():
         width = pygame.display.Info().current_w
         height = pygame.display.Info().current_h
         #above gets the screen resolution of screen being used, must be done before pygame.display.set_mode()
-        screen = pygame.display.set_mode((width, height), 0, 32)
+        screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN, 32)
 
         pygame.display.set_caption("Snake")
-        food = []
-        arena = Arena(10,10, 10, size, food)
+        arena = Arena(10,10, 10, size)
 
         clock = pygame.time.Clock()
         self.main_loop(screen, arena, clock)
@@ -213,11 +238,13 @@ class Game():
                     pygame.quit()
                 elif event.type == pygame.KEYDOWN:
                     if event.key in DIR_KEYS_1:
-                        directions[1] = DIRECTIONS[DIR_KEYS_1.index(event.key)]
-                        print event.key
+                        new_dir = DIRECTIONS[DIR_KEYS_1.index(event.key)]
+                        if not opposite_direction(new_dir, directions[0]):
+                            directions[0] = new_dir
                     if event.key in DIR_KEYS_2:
-                        directions[0] = DIRECTIONS[DIR_KEYS_2.index(event.key)]
-                        print event.key
+                        new_dir = DIRECTIONS[DIR_KEYS_2.index(event.key)]
+                        if not opposite_direction(new_dir, directions[1]):
+                            directions[1] = new_dir
             if stop == False:
                 screen.fill((0,0,0))
                 arena.components.draw(screen)
@@ -225,8 +252,9 @@ class Game():
                 arena.move_snakes(directions)
                 pygame.display.flip()
                 loser = arena.detect_collisions()
-                #if loser == None:
-                    #stop = True
+                if loser != None:
+                    print loser.color
+                    stop = True
                 clock.tick(10)
 
         pygame.quit()
