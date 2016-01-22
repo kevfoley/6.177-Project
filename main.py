@@ -226,6 +226,25 @@ class Game():
         self.main_loop(screen, arena, clock)
         pygame.quit()
 
+    def update_text(self, screen, arena):
+        self.screen = screen
+        self.arena = arena
+        font = pygame.font.SysFont('Couriernew', 50)
+        texts = []
+        if len(arena.snakes) == 1:
+            texts.append(font.render("POINTS: "+str(arena.snakes[0].points), True, arena.snakes[0].color))
+        else:
+            texts.append(font.render("RED: "+str(arena.snakes[0].points), True, arena.snakes[0].color))
+            texts.append(font.render("GREEN: "+str(arena.snakes[1].points), True, arena.snakes[1].color))
+
+        textX = [screen.get_rect().centerx - arena.grid_size[0]*WIDTH, screen.get_rect().centerx + arena.grid_size[0]*HEIGHT]
+
+        for i in range(len(texts)):
+            textpos = texts[i].get_rect()
+            textpos.centery = screen.get_rect().centery
+            textpos.centerx = textX[i]
+            self.screen.blit(texts[i], textpos)
+        pygame.display.flip()
 
     def main_loop(self, screen, arena, clock):
         directions = [DIRECTIONS[0], DIRECTIONS[1]]
@@ -251,6 +270,7 @@ class Game():
                 arena.components.draw(screen)
                 arena.draw_border(screen, (0,255,255))
                 arena.move_snakes(directions)
+                self.update_text(screen, arena)
                 pygame.display.flip()
                 loser = arena.detect_collisions()
                 if loser != None:
@@ -274,17 +294,15 @@ class Game():
         for snake in arena.snakes:
             points.append(snake.points)
 
-        stop = False
-        while stop == False:
-            event = pygame.event.wait()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_q:
-                    stop = True
-                elif event.key == pygame.K_RETURN:
-                    print 'yes'
-                    arena = Arena(screen.get_rect().centerx-arena.grid_size[0]*WIDTH/2, screen.get_rect().centery-arena.grid_size[1]*HEIGHT/2, 20, arena.grid_size, points)
-                    clock = pygame.time.Clock()
-                    self.main_loop(screen, arena, clock)
+        event = pygame.event.wait()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_q:
+                pygame.quit()
+            elif event.key == pygame.K_RETURN:
+                print 'yes'
+                arena = Arena(screen.get_rect().centerx-arena.grid_size[0]*WIDTH/2, screen.get_rect().centery-arena.grid_size[1]*HEIGHT/2, 20, arena.grid_size, points)
+                clock = pygame.time.Clock()
+                self.main_loop(screen, arena, clock)
 
 
 class Game_Over_Menu_Single:
