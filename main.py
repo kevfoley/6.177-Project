@@ -1,24 +1,32 @@
 import pygame
 import os
 import random
+from example_menu import main as menu
+
 
 WIDTH = 10
 HEIGHT = 10
-DIRECTIONS = [(0,1),(0,-1),(1,0),(-1,0)] #toward (row, col)
+DIRECTIONS = [(0,-1),(0,1),(1,0),(-1,0)] #toward (row, col)
 # Corresponds to ["East", "West", "South", "North"]
-DIR_KEYS_1 = [pygame.K_RIGHT, pygame.K_LEFT, pygame.K_DOWN, pygame.K_UP]
-DIR_KEYS_2 = [pygame.K_d, pygame.K_a, pygame.K_s, pygame.K_w]
-FOOD_COLOR = (0,0,255)
+DIR_KEYS_1 = [pygame.K_LEFT, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_UP]
+DIR_KEYS_2 = [pygame.K_a, pygame.K_d, pygame.K_s, pygame.K_w]
+BLUE = (0,0,255)
+RED = (255,0,0)
+GREEN = (0,255,0)
+FOOD_COLOR = BLUE
+SNAKE_COLORS = (RED, GREEN)
+SNAKE_NAMES = ("RED", "GREEN")
 ### CHRISTINE ###
 class Arena:
     # To be full screen and should have a border
-    def __init__(self, x, y, border_width, grid_size, points):
+    def __init__(self, x, y, border_width, grid_size, option, points):
         self.x = x
         self.y = y
+        self.option = option
         self.border_width = border_width
         self.grid_size = grid_size # tuple of (row, col)
         self.points = points
-        self.snakes = self.initialize_snakes(10, ((255,0,0), (0,255,0)), ("RED", "GREEN"), points)
+        self.snakes = self.initialize_snakes(10, SNAKE_COLORS[:option], SNAKE_NAMES, points) # option is single or multiplayer from the menu
         self.food = []
         self.components = pygame.sprite.RenderPlain()
         self.initialize_food()
@@ -27,7 +35,8 @@ class Arena:
                 self.components.add(parts)
 
     def initialize_food(self):
-        for _ in xrange(len(self.snakes)):
+        food_num = (len(self.snakes)-1)*4 + 1
+        for _ in xrange(food_num):
             self.make_food()
 
     def initialize_snakes(self, length, colors, names, points):
@@ -67,18 +76,25 @@ class Arena:
     """
 
     def detect_collisions(self):
+        loser = False
         for snake in self.snakes:
             head = snake.body_parts[0]
             for bite in self.food:
                 if head.collided_with(bite):
                     snake.eat_food(bite)
             if self.check_boundary(head):
-                return snake
-            for snake in self.snakes:
-                for body in snake.body_parts:
+                if loser == False:
+                    loser = snake
+                else:
+                    loser = None
+            for serpent in self.snakes:
+                for body in serpent.body_parts:
                     if head.collided_with(body):
-                        return snake
-        return None
+                        if loser == False:
+                            loser = snake
+                        else:
+                            loser = None
+        return loser
 
     """
     Receives a Body object representing the head of a Snake
@@ -205,6 +221,20 @@ def opposite_direction(dir1, dir2):
             return False
     return True
 
+def fade_out_message(screen, clock, color, message):
+    text_size = 200
+    font = pygame.font.Font(None, text_size)
+    text = font.render(message, True, color, (0,0,0))
+    text_rect = text.get_rect()
+    text_rect.centerx = screen.get_width()/2
+    text_rect.centery = screen.get_height()/2
+
+    for i in range(255):
+        screen.fill((0,0,0))
+        text.set_alpha(i)
+        screen.blit(text, text_rect)
+        pygame.display.flip()
+        clock.tick(250)
 
 ### KEVIN ###
 class Game():
@@ -212,15 +242,18 @@ class Game():
         """
         Set up the components to start a game
         """
-        size = (50, 50)
+        size = (40,40)
         pygame.init()
-
         width = pygame.display.Info().current_w
         height = pygame.display.Info().current_h
         screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN, 32)
 
+        game_choice = menu(screen)
+        if game_choice == None:
+            game_choice = 1
+            print game_choice
         pygame.display.set_caption("Snake")
-        arena = Arena(screen.get_rect().centerx-size[0]*WIDTH/2, screen.get_rect().centery-size[1]*HEIGHT/2, 20, size, (0,0))
+        arena = Arena(screen.get_rect().centerx-size[0]*WIDTH/2, screen.get_rect().centery-size[1]*HEIGHT/2, 20, size, game_choice, (0,0))
 
         clock = pygame.time.Clock()
         self.main_loop(screen, arena, clock)
@@ -234,8 +267,8 @@ class Game():
         if len(arena.snakes) == 1:
             texts.append(font.render("POINTS: "+str(arena.snakes[0].points), True, arena.snakes[0].color))
         else:
-            texts.append(font.render("RED: "+str(arena.snakes[0].points), True, arena.snakes[0].color))
             texts.append(font.render("GREEN: "+str(arena.snakes[1].points), True, arena.snakes[1].color))
+            texts.append(font.render("RED: "+str(arena.snakes[0].points), True, arena.snakes[0].color))
 
         textX = [screen.get_rect().centerx - arena.grid_size[0]*WIDTH, screen.get_rect().centerx + arena.grid_size[0]*HEIGHT]
 
@@ -249,8 +282,17 @@ class Game():
     def main_loop(self, screen, arena, clock):
         directions = [DIRECTIONS[0], DIRECTIONS[1]]
         stop = False
+        pygame.display.init()
         loser = Snake(arena, 0, (0,0,0), (1,0), "temp", 0)
         winner = None
+
+        """FADE IN TO BEGIN GAME"""
+        fade_out_message(screen, clock, BLUE, "3")
+        fade_out_message(screen, clock, BLUE, "2")
+        fade_out_message(screen, clock, BLUE, "1")
+        fade_out_message(screen, clock, BLUE, "GO")
+
+        """GAME LOOP"""
         while stop == False:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:  # user clicks close
@@ -273,17 +315,20 @@ class Game():
                 self.update_text(screen, arena)
                 pygame.display.flip()
                 loser = arena.detect_collisions()
-                if loser != None:
-                    print loser.color
-                    index = arena.snakes.index(loser)
-                    if len(arena.snakes)>1 and index == 0:
-                        winner = arena.snakes[1]
-                    elif len(arena.snakes)>1:
-                        winner = arena.snakes[0]
+                if loser is not False:
+                    if loser is None:
+                        winner = None
+                    else:
+                        index = arena.snakes.index(loser)
+                        if len(arena.snakes)>1 and index == 0:
+                            winner = arena.snakes[1]
+                        else:
+                            winner = arena.snakes[0]
                     stop = True
+                pygame.display.flip()
                 clock.tick(10)
 
-        if winner != None:
+        if len(arena.snakes)>1:
             winner.points += 1000
             menu = Game_Over_Menu_Multi(screen, arena.snakes, winner)
             menu.run()
@@ -293,14 +338,13 @@ class Game():
         points = []
         for snake in arena.snakes:
             points.append(snake.points)
-
         event = pygame.event.wait()
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_q:
                 pygame.quit()
             elif event.key == pygame.K_RETURN:
                 print 'yes'
-                arena = Arena(screen.get_rect().centerx-arena.grid_size[0]*WIDTH/2, screen.get_rect().centery-arena.grid_size[1]*HEIGHT/2, 20, arena.grid_size, points)
+                arena = Arena(screen.get_rect().centerx-arena.grid_size[0]*WIDTH/2, screen.get_rect().centery-arena.grid_size[1]*HEIGHT/2, 20, arena.grid_size, arena.option, points)
                 clock = pygame.time.Clock()
                 self.main_loop(screen, arena, clock)
 
