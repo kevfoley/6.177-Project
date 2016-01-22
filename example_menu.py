@@ -57,8 +57,7 @@ def main(screen):
    menu = cMenu(50, 50, 20, 5, 'vertical', 100, screen,
                [('Single Player', 1, None),
                 ('Multiplayer',  2, None),
-                ('Options',    3, None),
-                ('Exit',       4, None)])
+                ('Exit',         4, None),])
 
    # Center the menu on the draw_surface (the entire screen here)
    menu.set_center(True, True)
