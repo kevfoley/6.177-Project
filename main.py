@@ -16,7 +16,7 @@ GREEN = (0,255,0)
 FOOD_COLOR = BLUE
 SNAKE_COLORS = (RED, GREEN)
 SNAKE_NAMES = ("RED", "GREEN")
-### CHRISTINE ###
+
 class Arena:
     # To be full screen and should have a border
     def __init__(self, x, y, border_width, grid_size, option, points):
@@ -72,7 +72,7 @@ class Arena:
 
     """
     Checks each snake to see if it has eaten food or collided with another snake or the boundary
-    Returns the Snake that loses or None if the game continues
+    Returns the Snake that loses, None if it is a tie, or False if the game continues
     """
 
     def detect_collisions(self):
@@ -83,14 +83,14 @@ class Arena:
                 if head.collided_with(bite):
                     snake.eat_food(bite)
             if self.check_boundary(head):
-                if loser == False:
+                if loser is False:
                     loser = snake
                 else:
                     loser = None
-            for serpent in self.snakes:
-                for body in serpent.body_parts:
+            for other_snake in self.snakes: # named other_snake so it is not confused with the snake variable already created
+                for body in other_snake.body_parts:
                     if head.collided_with(body):
-                        if loser == False:
+                        if loser is False:
                             loser = snake
                         else:
                             loser = None
@@ -163,11 +163,11 @@ class Snake:
         start_row = self.arena.grid_size[0] * self.direction[1] / 2
         start_col = self.arena.grid_size[1] * self.direction[0] / 2
         if start_row < 0:
-            start_row = start_row*-1
+            start_row *= -1
             start_col = self.arena.grid_size[1] - 1
         elif start_col < 0:
             start_row = self.arena.grid_size[0] - 1
-            start_col = start_col * -1
+            start_col *= -1
         parts = []
         for j in reversed(range(self.length)):
             row_n = start_row + j*self.direction[0]
@@ -175,9 +175,6 @@ class Snake:
             b = Body(self.arena, row_n, col_n, self.color)
             parts.append(b)
         self.body_parts = parts
-
-    def is_head(self, part):
-        return self.body_parts[0] == part
 
     def eat_food(self, bite):
         self.add_unit()
@@ -198,7 +195,7 @@ class Snake:
                 part.col = previous.col
             part.update()
 
-    """adds to body part to end of Snake"""
+    """adds body part to end of Snake"""
     def add_unit(self):
         previous = self.body_parts[-1]
         unit = Body(self.arena, previous.row, previous.col, self.color)
@@ -226,7 +223,6 @@ def fade_out_message(screen, clock, color, message):
         pygame.display.flip()
         clock.tick(250)
 
-### KEVIN ###
 class Game():
     def __init__(self):
         """
@@ -279,7 +275,7 @@ class Game():
         fade_out_message(screen, clock, BLUE, "GO")
 
         """GAME LOOP"""
-        while stop == False:
+        while stop is False:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:  # user clicks close
                     stop = True
@@ -293,7 +289,7 @@ class Game():
                         new_dir = DIRECTIONS[DIR_KEYS_2.index(event.key)]
                         if not opposite_direction(new_dir, directions[1]):
                             directions[1] = new_dir
-            if stop == False:
+            if stop is False:
                 screen.fill((0,0,0))
                 arena.components.draw(screen)
                 arena.draw_border(screen, (0,255,255))
@@ -314,6 +310,7 @@ class Game():
                 pygame.display.flip()
                 clock.tick(10)
 
+        """AFTER GAME MENU"""
         points = []
         if len(arena.snakes)>1:
             if winner is not None:
@@ -339,7 +336,7 @@ class Game():
                 self.main_loop(screen, arena, clock)
 
 
-class Game_Over_Menu_Single:
+class Game_Over_Menu_Single(object):
     def __init__(self, screen, snakes):
         self.screen = screen
         self.snakes = snakes
@@ -366,7 +363,7 @@ class Game_Over_Menu_Single:
             self.screen.blit(text[i], textpos)
         pygame.display.flip()
 
-class Game_Over_Menu_Multi:
+class Game_Over_Menu_Multi(object):
 
     def __init__(self, screen, snakes, winner):
         self.screen = screen
