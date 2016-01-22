@@ -213,7 +213,7 @@ def opposite_direction(dir1, dir2):
 
 def fade_out_message(screen, clock, color, message):
     text_size = 200
-    font = pygame.font.Font(None, text_size)
+    font = pygame.font.SysFont('Couriernew', text_size)
     text = font.render(message, True, color, (0,0,0))
     text_rect = text.get_rect()
     text_rect.centerx = screen.get_width()/2
@@ -320,7 +320,8 @@ class Game():
 
         points = []
         if len(arena.snakes)>1:
-            winner.points += 1000
+            if winner is not None:
+                winner.points += 1000
             menu = Game_Over_Menu_Multi(screen, arena.snakes, winner)
             menu.run()
             for snake in arena.snakes:
@@ -383,7 +384,10 @@ class Game_Over_Menu_Multi:
 
     def run(self):
         text = []
-        text.append(self.font1.render(self.winner.name+" wins!!!", True, self.winner.color))
+        if self.winner == None:
+            text.append(self.font1.render(" Tie", True, (0,255,255)))
+        else:
+            text.append(self.font1.render(self.winner.name+" wins!!!", True, self.winner.color))
         text.append(self.font2.render(self.snakes[0].name+" has "+str(self.snakes[0].points)+" points!", True, (0,255,255)))
         text.append(self.font2.render(self.snakes[1].name+" has "+str(self.snakes[1].points)+" points!", True, (0,255,255)))
         text.append(self.font3.render("Press ENTER to play again or", True, (255, 255, 0)))
