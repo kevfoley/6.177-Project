@@ -4,14 +4,17 @@ import random
 from example_menu import main as menu
 
 
-WIDTH = 10
-HEIGHT = 10
+WIDTH = 15
+HEIGHT = 15
 DIRECTIONS = [(0,1),(0,-1),(1,0),(-1,0)] #toward (row, col)
 # Corresponds to ["East", "West", "South", "North"]
 DIR_KEYS_1 = [pygame.K_RIGHT, pygame.K_LEFT, pygame.K_DOWN, pygame.K_UP]
 DIR_KEYS_2 = [pygame.K_d, pygame.K_a, pygame.K_s, pygame.K_w]
-FOOD_COLOR = (0,0,255)
-SNAKE_COLORS = ((255,0,0),(0,255,0))
+BLUE = (0,0,255)
+RED = (255,0,0)
+GREEN = (0,255,0)
+FOOD_COLOR = BLUE
+SNAKE_COLORS = (RED, GREEN)
 ### CHRISTINE ###
 class Arena:
     # To be full screen and should have a border
@@ -20,7 +23,7 @@ class Arena:
         self.y = y
         self.border_width = border_width
         self.border_size = border_size # tuple of (row, col)
-        self.snakes = self.initialize_snakes(10, SNAKE_COLORS[:option])
+        self.snakes = self.initialize_snakes(10, SNAKE_COLORS[:option]) # option is single or multiplayer from the menu
         self.food = []
         self.components = pygame.sprite.RenderPlain()
         self.initialize_food()
@@ -69,18 +72,25 @@ class Arena:
     """
 
     def detect_collisions(self):
+        loser = False
         for snake in self.snakes:
             head = snake.body_parts[0]
             for bite in self.food:
                 if head.collided_with(bite):
                     snake.eat_food(bite)
             if self.check_boundary(head):
-                return snake
-            for snake in self.snakes:
-                for body in snake.body_parts:
+                if loser == False:
+                    loser = snake
+                else:
+                    loser = None
+            for serpent in self.snakes:
+                for body in serpent.body_parts:
                     if head.collided_with(body):
-                        return snake
-        return None
+                        if loser == False:
+                            loser = snake
+                        else:
+                            loser = None
+        return loser
 
     """
     Receives a Body object representing the head of a Snake
@@ -210,10 +220,10 @@ def opposite_direction(dir1, dir2):
             return False
     return True
 
-def fade_out_message(screen, clock, message):
+def fade_out_message(screen, clock, color, message):
     text_size = 200
     font = pygame.font.Font(None, text_size)
-    text = font.render(message, True, (0,0,255), (0,0,0))
+    text = font.render(message, True, color, (0,0,0))
     text_rect = text.get_rect()
     text_rect.centerx = screen.get_width()/2
     text_rect.centery = screen.get_height()/2
@@ -223,7 +233,7 @@ def fade_out_message(screen, clock, message):
         text.set_alpha(i)
         screen.blit(text, text_rect)
         pygame.display.flip()
-        clock.tick(150)
+        clock.tick(250)
 
 ### KEVIN ###
 class Game():
@@ -254,10 +264,10 @@ class Game():
         pygame.display.init()
 
         """FADE IN TO BEGIN GAME"""
-        fade_out_message(screen, clock, "3")
-        fade_out_message(screen, clock, "2")
-        fade_out_message(screen, clock, "1")
-        fade_out_message(screen, clock, "GO")
+        fade_out_message(screen, clock, BLUE, "3")
+        fade_out_message(screen, clock, BLUE, "2")
+        fade_out_message(screen, clock, BLUE, "1")
+        fade_out_message(screen, clock, BLUE, "GO")
 
         """GAME LOOP"""
         while stop == False:
@@ -281,21 +291,15 @@ class Game():
                 arena.move_snakes(directions)
                 pygame.display.flip()
                 loser = arena.detect_collisions()
-                if loser != None:
-                    print loser.color
+                if loser is not False:
+                    if loser == None:
+                        print "Tie"
+                    else:
+                        print loser.color
                     stop = True
                 pygame.display.flip()
-                clock.tick(5)
-
+                clock.tick(10)
         pygame.quit()
 
-
-
-class Single_Player(Game):
-    pass
-
-
-class Multi_Player(Game):
-    pass
-
+# Start the game
 game  = Game()
