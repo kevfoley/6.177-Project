@@ -106,26 +106,18 @@ class Arena:
         return head.row < 0 or head.row > max_rows or head.col < 0 or head.col > max_cols
 
     def get_col_left_loc(self, col, width=WIDTH):
-        return self.x + self.border_width + col * width
-        pass
+        return self.x + col * width
 
     def get_row_top_loc(self, row, height=HEIGHT):
-        return self.y + self.border_width + row * height
-        pass
+        return self.y + row * height
 
     def draw_border(self, screen, color):
-        mid = self.border_width / 2
-        width = self.grid_size[0] * WIDTH
-        height = self.grid_size[1] * HEIGHT
-        pygame.draw.line(screen, color, (self.x-mid, self.y-self.border_width), (self.x-mid, self.y+width+self.border_width), self.border_width)
-        pygame.draw.line(screen, color, (self.x-self.border_width, self.y-mid), (self.x+height+self.border_width, self.y-mid), self.border_width)
-        pygame.draw.line(screen, color, (self.x+height+mid, self.y-self.border_width), (self.x+height+mid, self.y+width+self.border_width), self.border_width)
-        pygame.draw.line(screen, color, (self.x-self.border_width, self.y+width+mid), (self.x+height+self.border_width, self.y+width+mid), self.border_width)
-        return
+        width = self.grid_size[0] * WIDTH + 1.5*self.border_width
+        height = self.grid_size[1] * HEIGHT + 1.5*self.border_width
+        rect = pygame.Rect(self.x-self.border_width/2, self.y-self.border_width/2, width, height)
+        pygame.draw.rect(screen, color, rect, self.border_width)
 
-    pass
-
-
+        
 class Body(pygame.sprite.Sprite):
     def __init__(self,arena, row, col, color):
         pygame.sprite.Sprite.__init__(self)
@@ -156,8 +148,6 @@ class Body(pygame.sprite.Sprite):
     def update(self):
         self.rect.x = self.arena.get_col_left_loc(self.col)
         self.rect.y = self.arena.get_row_top_loc(self.row)
-
-    pass
 
 class Snake:
 
@@ -328,22 +318,25 @@ class Game():
                 pygame.display.flip()
                 clock.tick(10)
 
+        points = []
         if len(arena.snakes)>1:
             winner.points += 1000
             menu = Game_Over_Menu_Multi(screen, arena.snakes, winner)
             menu.run()
+            for snake in arena.snakes:
+                points.append(snake.points)
         else:
             menu = Game_Over_Menu_Single(screen, arena.snakes)
             menu.run()
-        points = []
-        for snake in arena.snakes:
-            points.append(snake.points)
+            points.append(0)
+
         event = pygame.event.wait()
+        while not (event.type == pygame.KEYDOWN and (event.key == pygame.K_q or event.key == pygame.K_RETURN)):
+            event = pygame.event.wait()
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_q:
                 pygame.quit()
             elif event.key == pygame.K_RETURN:
-                print 'yes'
                 arena = Arena(screen.get_rect().centerx-arena.grid_size[0]*WIDTH/2, screen.get_rect().centery-arena.grid_size[1]*HEIGHT/2, 20, arena.grid_size, arena.option, points)
                 clock = pygame.time.Clock()
                 self.main_loop(screen, arena, clock)
