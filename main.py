@@ -117,7 +117,7 @@ class Arena:
         rect = pygame.Rect(self.x-self.border_width/2, self.y-self.border_width/2, width, height)
         pygame.draw.rect(screen, color, rect, self.border_width)
 
-        
+
 class Body(pygame.sprite.Sprite):
     def __init__(self,arena, row, col, color):
         pygame.sprite.Sprite.__init__(self)
@@ -239,10 +239,7 @@ class Game():
         screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN, 32)
 
         game_choice = menu(screen)
-        if game_choice == None:
-            game_choice = 1
-            print game_choice
-        pygame.display.set_caption("Snake")
+        pygame.display.set_caption("PySnake")
         arena = Arena(screen.get_rect().centerx-size[0]*WIDTH/2, screen.get_rect().centery-size[1]*HEIGHT/2, 20, size, game_choice, (0,0))
 
         clock = pygame.time.Clock()
@@ -273,7 +270,6 @@ class Game():
         directions = [DIRECTIONS[0], DIRECTIONS[1]]
         stop = False
         pygame.display.init()
-        loser = Snake(arena, 0, (0,0,0), (1,0), "temp", 0)
         winner = None
 
         """FADE IN TO BEGIN GAME"""

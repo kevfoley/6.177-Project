@@ -97,16 +97,13 @@ def main(screen):
          if state == 0:
             rect_list, state = menu.update(e, state)
          elif state == 1:
-            print 'Start Game!'
+            print 'Single Player'
             state = 0
-            return
+            return 1
          elif state == 2:
-            print 'Load Game!'
+            print 'Multi-Player'
             state = 0
             return 2
-         elif state == 3:
-            print 'Options!'
-            state = 0
          else:
             print 'Exit!'
             pygame.quit()
