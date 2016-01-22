@@ -94,6 +94,9 @@ GREEN = (0, 255, 0)
 ## RGB color for Blue
 BLUE = (0, 0, 255)
 
+## RGB color for Cyan
+CYAN = (0,100,100)
+
 ## This is a user event that should be sent whenever the game state is changed
 #  (at the main game loop level)
 EVENT_CHANGE_STATE = pygame.USEREVENT + 1
@@ -140,7 +143,7 @@ class cMenu:
                 buttonList):
       ## menu items
       self.menu_items = []                      # List of menu items
-      self.font = pygame.font.SysFont('Couriernew', 75)    # Font to use
+      self.font = pygame.font.SysFont('Couriernew', 25)    # Font to use
 
       self.x = x                                # Top left corner (of surface)
       self.y = y                                # relative to the screen/window
@@ -151,15 +154,15 @@ class cMenu:
 
       self.selection = 0                        # The currently selected button
       self.u_color = WHITE                      # Color for unselected text
-      self.s_color = RED                        # Color for selected text
-      self.image_highlight_color = BLUE         # Color for the image highlights
+      self.s_color = CYAN                        # Color for selected text
+      self.image_highlight_color = RED         # Color for the image highlights
       self.image_highlight_offset = 2           # Addition padding around image
                                                 # buttons only for the highlight
 
       self.background = background.copy()       # The unedited background image
       self.draw_surface = background            # Surface to draw to
-      self.centered = False                     # True if the menu is centered
-      self.centeredOnScreen = False             # True if the menu is centered
+      self.centered = True                     # True if the menu is centered
+      self.centeredOnScreen = True             # True if the menu is centered
       self.update_buttons = True                # True if the positions of the
                                                 # buttons need to be updated
       self.refresh_whole_surface_on_load = False# When the menu is first
