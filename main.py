@@ -1,6 +1,8 @@
 import pygame
 import os
 import random
+from example_menu import main as menu
+
 
 WIDTH = 10
 HEIGHT = 10
@@ -9,15 +11,16 @@ DIRECTIONS = [(0,1),(0,-1),(1,0),(-1,0)] #toward (row, col)
 DIR_KEYS_1 = [pygame.K_RIGHT, pygame.K_LEFT, pygame.K_DOWN, pygame.K_UP]
 DIR_KEYS_2 = [pygame.K_d, pygame.K_a, pygame.K_s, pygame.K_w]
 FOOD_COLOR = (0,0,255)
+SNAKE_COLORS = ((255,0,0),(0,255,0))
 ### CHRISTINE ###
 class Arena:
     # To be full screen and should have a border
-    def __init__(self, x, y, border_width, border_size):
+    def __init__(self, x, y, border_width, border_size, option):
         self.x = x
         self.y = y
         self.border_width = border_width
         self.border_size = border_size # tuple of (row, col)
-        self.snakes = self.initialize_snakes(10, ((255,0,0), (0,255,0)))
+        self.snakes = self.initialize_snakes(10, SNAKE_COLORS[:option])
         self.food = []
         self.components = pygame.sprite.RenderPlain()
         self.initialize_food()
@@ -26,7 +29,7 @@ class Arena:
                 self.components.add(parts)
 
     def initialize_food(self):
-        for _ in xrange(len(self.snakes)):
+        for _ in xrange(7):
             self.make_food()
 
     def initialize_snakes(self, length, colors):
@@ -207,6 +210,20 @@ def opposite_direction(dir1, dir2):
             return False
     return True
 
+def fade_out_message(screen, clock, message):
+    text_size = 200
+    font = pygame.font.Font(None, text_size)
+    text = font.render(message, True, (0,0,255), (0,0,0))
+    text_rect = text.get_rect()
+    text_rect.centerx = screen.get_width()/2
+    text_rect.centery = screen.get_height()/2
+
+    for i in range(255):
+        screen.fill((0,0,0))
+        text.set_alpha(i)
+        screen.blit(text, text_rect)
+        pygame.display.flip()
+        clock.tick(150)
 
 ### KEVIN ###
 class Game():
@@ -214,16 +231,19 @@ class Game():
         """
         Set up the components to start a game
         """
-        size = (75,75)
+        size = (40,40)
         pygame.init()
-
         width = pygame.display.Info().current_w
         height = pygame.display.Info().current_h
         #above gets the screen resolution of screen being used, must be done before pygame.display.set_mode()
         screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN, 32)
 
+        game_choice = menu(screen)
+        if game_choice == None:
+            game_choice = 1
+            print game_choice
         pygame.display.set_caption("Snake")
-        arena = Arena(10,10, 10, size)
+        arena = Arena(10,10, 10, size, game_choice)
 
         clock = pygame.time.Clock()
         self.main_loop(screen, arena, clock)
@@ -231,6 +251,15 @@ class Game():
     def main_loop(self, screen, arena, clock):
         directions = [DIRECTIONS[0], DIRECTIONS[1]]
         stop = False
+        pygame.display.init()
+
+        """FADE IN TO BEGIN GAME"""
+        fade_out_message(screen, clock, "3")
+        fade_out_message(screen, clock, "2")
+        fade_out_message(screen, clock, "1")
+        fade_out_message(screen, clock, "GO")
+
+        """GAME LOOP"""
         while stop == False:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:  # user clicks close
@@ -255,7 +284,8 @@ class Game():
                 if loser != None:
                     print loser.color
                     stop = True
-                clock.tick(10)
+                pygame.display.flip()
+                clock.tick(5)
 
         pygame.quit()
 
